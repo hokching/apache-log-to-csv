@@ -48,7 +48,7 @@ def main(**kwargs):
     with open(kwargs['input'], 'rb') as inFile, open(kwargs['output'], 'w') as outFile:
 
         lines = inFile.readlines()
-        writer = csv.writer(outFile, delimiter=';')
+        writer = csv.writer(outFile, delimiter='\t')
 
         for line in lines:
             try:
@@ -64,7 +64,7 @@ def main(**kwargs):
             else:
                 writer.writerow(list(log_line_data.values()))
 
-    print(bcolors.OKGREEN + 'Conversion finished.' + bcolors.ENDC)
+    print(Colors.OKGREEN + 'Conversion finished.' + Colors.ENDC)
 
 
 if __name__ == '__main__':
