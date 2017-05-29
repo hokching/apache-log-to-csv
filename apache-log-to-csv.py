@@ -24,7 +24,7 @@ __maintainer__ = "Paul Biester"
 __email__ = "p.biester@isonet.fr"
 __status__ = "Beta"
 
-import csv
+import csv, sys
 import apache_log_parser
 import argparse
 
@@ -45,33 +45,43 @@ def main(**kwargs):
     line_parser = apache_log_parser.make_parser(kwargs['format'])
     header = True
     columns_arg = kwargs['columns']
+    input_arg = kwargs['input']
+    output_arg = kwargs['output']
 
-    with open(kwargs['input'], 'rb') as inFile, open(kwargs['output'], 'w') as outFile:
+    if input_arg == '-':
+        inFile = sys.stdin
+    else:
+        inFile = open(input_arg, 'rb')
 
-        lines = inFile.readlines()
-        writer = csv.writer(outFile, delimiter='\t')
+    if output_arg == '-':
+        outFile = sys.stdout
+    else:
+        outFile = open(output_arg, 'w')
 
-        for line in lines:
-            try:
-                log_line_data = line_parser(line)
-            except apache_log_parser.LineDoesntMatchException as ex:
-                print(Colors.FAIL + 'The format specified does not match the log file. Aborting...' + Colors.ENDC)
-                print('Line: ' + ex.log_line + 'RegEx: ' + ex.regex)
-                exit()
 
-            if header:
-                if columns_arg == 'ALL':
-                    columns = list(log_line_data.keys())
-                else:
-                    columns = columns_arg.split(',')
-                writer.writerow(columns)
-                header = False
+    lines = inFile.readlines()
+    writer = csv.writer(outFile, delimiter='\t')
+
+    for line in lines:
+        try:
+            log_line_data = line_parser(line)
+        except apache_log_parser.LineDoesntMatchException as ex:
+            print(Colors.FAIL + 'The format specified does not match the log file. Aborting...' + Colors.ENDC)
+            print('Line: ' + ex.log_line + 'RegEx: ' + ex.regex)
+            exit()
+
+        if header:
+            if columns_arg == 'ALL':
+                columns = list(log_line_data.keys())
             else:
-                values = []
-                for column in columns:
-                    values.append(log_line_data[column])
-
-                writer.writerow(values)
+                columns = columns_arg.split(',')
+            writer.writerow(columns)
+            header = False
+        else:
+            values = []
+            for column in columns:
+                values.append(log_line_data[column])
+            writer.writerow(values)
 
     print(Colors.OKGREEN + 'Conversion finished.' + Colors.ENDC)
 
@@ -79,8 +89,8 @@ def main(**kwargs):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert Apache logs to csv', version='%(prog)s 1.0')
     parser.add_argument('--format', '-f', type=str, help='Apache log format (see http://httpd.apache.org/docs/2.2/logs.html)')
-    parser.add_argument('--input', '-i', type=str, help='Input log file ex. /var/log/apache/access.log')
-    parser.add_argument('--output', '-o', type=str, help='Output csv file ex. ~/accesslog.csv')
+    parser.add_argument('--input', '-i', type=str, help='Input log file ex. /var/log/apache/access.log', default='-')
+    parser.add_argument('--output', '-o', type=str, help='Output csv file ex. ~/accesslog.csv', default='-')
     parser.add_argument('--columns', '-c', type=str, help='Output columns, comma delimited, ex. status,time_received_utc_isoformat,request_url_query', default='ALL')
     args = parser.parse_args()
     main(**vars(args))
