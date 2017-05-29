@@ -44,6 +44,7 @@ def main(**kwargs):
 
     line_parser = apache_log_parser.make_parser(kwargs['format'])
     header = True
+    columns_arg = kwargs['columns']
 
     with open(kwargs['input'], 'rb') as inFile, open(kwargs['output'], 'w') as outFile:
 
@@ -54,23 +55,32 @@ def main(**kwargs):
             try:
                 log_line_data = line_parser(line)
             except apache_log_parser.LineDoesntMatchException as ex:
-                print(bcolors.FAIL + 'The format specified does not match the log file. Aborting...' + bcolors.ENDC)
+                print(Colors.FAIL + 'The format specified does not match the log file. Aborting...' + Colors.ENDC)
                 print('Line: ' + ex.log_line + 'RegEx: ' + ex.regex)
                 exit()
 
             if header:
-                writer.writerow(list(log_line_data.keys()))
+                if columns_arg == 'ALL':
+                    columns = list(log_line_data.keys())
+                else:
+                    columns = columns_arg.split(',')
+                writer.writerow(columns)
                 header = False
             else:
-                writer.writerow(list(log_line_data.values()))
+                values = []
+                for column in columns:
+                    values.append(log_line_data[column])
+
+                writer.writerow(values)
 
     print(Colors.OKGREEN + 'Conversion finished.' + Colors.ENDC)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert Apache logs to csv', version='%(prog)s 1.0')
-    parser.add_argument('format', type=str, help='Apache log format (see http://httpd.apache.org/docs/2.2/logs.html)')
-    parser.add_argument('input', type=str, help='Input log file ex. /var/log/apache/access.log')
-    parser.add_argument('output', type=str, help='Output csv file ex. ~/accesslog.csv')
+    parser.add_argument('--format', '-f', type=str, help='Apache log format (see http://httpd.apache.org/docs/2.2/logs.html)')
+    parser.add_argument('--input', '-i', type=str, help='Input log file ex. /var/log/apache/access.log')
+    parser.add_argument('--output', '-o', type=str, help='Output csv file ex. ~/accesslog.csv')
+    parser.add_argument('--columns', '-c', type=str, help='Output columns, comma delimited, ex. status,time_received_utc_isoformat,request_url_query', default='ALL')
     args = parser.parse_args()
     main(**vars(args))
