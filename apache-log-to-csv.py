@@ -40,7 +40,7 @@ class Colors:
 
 def main(**kwargs):
 
-    print('Converting, please wait...')
+    #print('Converting, please wait...')
 
     line_parser = apache_log_parser.make_parser(kwargs['format'])
     header = True
