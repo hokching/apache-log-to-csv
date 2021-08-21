@@ -75,7 +75,7 @@ def main(**kwargs):
 
     for line in lines:
         try:
-            log_line_data = line_parser(line)
+            log_line_data = line_parser(str(line))
         except apache_log_parser.LineDoesntMatchException as ex:
             print(Colors.FAIL + 'The format specified does not match the log file. Aborting...' + Colors.ENDC, file=progressFile)
             print('Line: ' + ex.log_line + 'RegEx: ' + ex.regex, file=progressFile)
@@ -101,7 +101,7 @@ def main(**kwargs):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Convert Apache logs to csv', version='%(prog)s 1.0')
+    parser = argparse.ArgumentParser(description='Convert Apache logs to csv') #, version='%(prog)s 1.0')
     parser.add_argument('--format', '-f', type=str, help='Apache log format (see http://httpd.apache.org/docs/2.2/logs.html)')
     parser.add_argument('--input', '-i', type=str, help='Input log file ex. /var/log/apache/access.log', default='-')
     parser.add_argument('--output', '-o', type=str, help='Output csv file ex. ~/accesslog.csv', default='-')
